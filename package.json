@@ -1,0 +1,16 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "apollo-server": "^2.24.0",
+    "graphql": "^15.5.0",
+    "graphql-modules": "^1.4.2",
+    "mongoose": "^5.12.9"
+  },
+  "scripts": {
+    "dev": "nodemon index.js"
+  }
+}
