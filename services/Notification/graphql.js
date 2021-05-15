@@ -6,7 +6,9 @@ export const NotificationModule = createModule({
   dirname: __dirname,
   typeDefs: [
     gql`
-      
+      extend type Query {
+        notifications: String!
+      }
     `,
   ],
   resolvers: {

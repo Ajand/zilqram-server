@@ -1,6 +1,6 @@
 import graphqlModule from "./graphql.js";
 
-const NotificationService = ({userService}) => {
+const NotificationService = () => {
 
   return {
     graphqlModule,
