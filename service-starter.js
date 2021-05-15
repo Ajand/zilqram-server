@@ -1,9 +1,9 @@
-import UserService from './services/User/index.js'
+import UserService from "./services/User/index.js";
+import TournomentService from "./services/Tournoment/index.js";
 
-const userService = UserService()
+const userService = UserService();
+const tournomentService = TournomentService();
 
-export {
-    userService
-}
+export { userService, tournomentService };
 
-export default [userService]
+export default [userService, tournomentService];
