@@ -7,15 +7,15 @@ export const UserModule = createModule({
   typeDefs: [
     gql`
       scalar Upload
-      scalar Date
 
 
       type PersonalInfo {
-        firstName: String!
-        lastName: String!
-        birthDay: Date
+        firstName: String
+        lastName: String
+        birthDay: String
         avatar: String
         bio: String
+        setted: Boolean!
       }
 
       type User {
@@ -24,6 +24,8 @@ export const UserModule = createModule({
         username: String!
         verified: Boolean!
         personal: PersonalInfo
+        createdAt: String!
+        updatedAt: String!
       }
 
       type Query {
@@ -41,7 +43,7 @@ export const UserModule = createModule({
       input PersonalInfoInput {
         firstName: String
         lastName: String
-        birthDay: Date
+        birthDay: String
         avatar: Upload
         bio: String
       }
@@ -53,6 +55,9 @@ export const UserModule = createModule({
         resetPassword(identifier: String!, key: String!, password: String!): String!
         changePassword(password: String!): String!
         editPersonalInfo(personalInfo: PersonalInfoInput!): String!
+
+        doesUsernameExist(username: String!): Boolean!
+        doesEmailExist(email: String!): Boolean!
       }
     `,
   ],
