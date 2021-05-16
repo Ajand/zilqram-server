@@ -1,10 +1,10 @@
 import graphqlModule from "./graphql.js";
 
-const TournomentService = () => {
+const TournamentService = () => {
   return {
     graphqlModule,
   };
 };
 
-export default TournomentService;
+export default TournamentService;
  
