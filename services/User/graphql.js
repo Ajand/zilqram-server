@@ -1,6 +1,6 @@
 import { createModule, gql } from "graphql-modules";
 import jwt from "jsonwebtoken";
-import { getAddressFromPublicKey } from '@zilliqa-js/crypto'
+import { getAddressFromPublicKey } from "@zilliqa-js/crypto";
 
 import { __dirname } from "../../util.js";
 import { methods } from "./model.js";
@@ -40,7 +40,11 @@ export const UserModule = createModule({
 
       type Mutation {
         getNounce(address: String!): String!
-        getToken(address: String!, signedMessage: String!, publicKey: String!): String!
+        getToken(
+          address: String!
+          signedMessage: String!
+          publicKey: String!
+        ): String!
 
         editPersonalInfo(personalInfo: PersonalInfoInput!): String!
         doesUsernameExist(username: String!): Boolean!
@@ -49,10 +53,20 @@ export const UserModule = createModule({
     `,
   ],
   resolvers: {
-    Query: {},
+    Query: {
+      me: (_, __, { userId }) => {
+        if(!userId) return null
+        return methods.queries
+          .get(userId)
+          .then((user) => user)
+          .catch((err) => {
+            throw new Error(err);
+          });
+      },
+    },
 
     Mutation: {
-      getNounce: (_, { address }) => {
+      getNounce: (_, { address }, { userId }) => {
         return methods.queries
           .getUserByAddress(address)
           .then((user) => user)
@@ -71,8 +85,11 @@ export const UserModule = createModule({
         return methods.queries
           .getUserByAddress(address)
           .then((user) => {
-            const matchedAddress = user.addresses.find(address => address === String(getAddressFromPublicKey(publicKey)))
-            if(matchedAddress) {
+            const matchedAddress = user.addresses.find(
+              (address) =>
+                address === String(getAddressFromPublicKey(publicKey))
+            );
+            if (matchedAddress) {
               if (
                 isVerifiedSign({
                   message: user.nounce,
@@ -86,11 +103,13 @@ export const UserModule = createModule({
                 throw new Error("Sign does not match.");
               }
             } else {
-              throw new Error("There is no address that match with public key.")
+              throw new Error(
+                "There is no address that match with public key."
+              );
             }
-            
           })
           .catch((err) => {
+            console.log(err);
             throw new Error(err);
           });
       },
