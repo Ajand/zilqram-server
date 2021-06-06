@@ -1,80 +1,100 @@
 import mongoose from "mongoose";
-
-const validateEmail = (email) => {
-  var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-  return re.test(email);
-};
-
-const errorMessages = {
-  email: {
-    required: "وارد کردن پست الکترونیکی الزامی است.",
-    notValid: "پست الکترونیکی صحیح نمی‌باشد.",
-  },
-  username: {
-    required: "وارد کردن نام‌ کاربری الزامی است.",
-    min: "نام کاربری می‌بایست حداقل ۳ حرفی باشد.",
-    max: "نام کاربری می‌بایست حداکثر ۱۸ حرفی باشد.",
-  },
-  password: {
-    required: "رمز‌عبور الزامی می‌باشد.",
-  },
-};
+import keygen from "keygen";
 
 const UserSchema = new mongoose.Schema(
   {
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      unique: true,
-      required: errorMessages.email.required,
-      validate: [validateEmail, errorMessages.email.notValid],
-      match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        errorMessages.email.notValid,
-      ],
-    },
     username: {
       type: String,
       trim: true,
       lowercase: true,
       unique: true,
-      required: errorMessages.username.required,
-      min: [3, errorMessages.username.min],
-      max: [18, errorMessages.username.max],
+      sparse: true,
     },
-    verified: {
+    displayName: String,
+    avatar: String,
+    bio: String,
+    setted: {
       type: Boolean,
       default: false,
     },
-    credentials: {
-      password: {
-        type: String,
-        required: true,
-      },
-      verificationKey: String,
-      resetPassword: {
-        key: String,
-        dueDate: Date,
-      },
+    nounce: {
+      type: String,
+      required: true,
     },
-    personal: {
-      firstName: String,
-      lastName: String,
-      birthDay: String,
-      avatar: String,
-      bio: String,
-      setted: {
-        type: Boolean,
-        default: false,
-      },
-    },
+    addresses: [String],
   },
   {
     timestamps: true,
   }
 );
 
-const User = mongoose.model("user", UserSchema);
+export const User = mongoose.model("user", UserSchema);
 
-export default User;
+const getUserByAddress = (address) => {
+  return new Promise((resolve, reject) => {
+    User.findOne({ addresses: { $in: [address] } }, (err, user) => {
+      if (err) return reject(err);
+      if (!user) return reject(new Error("No user found!"));
+      return resolve(user);
+    });
+  });
+};
+
+const get = (_id) => {
+  return new Promise((resolve, reject) => {
+    User.findOne({ _id }, (err, user) => {
+      if (err) return reject(err);
+      if (!user) return reject(new Error("No user found!"));
+      return resolve(user);
+    });
+  });
+};
+
+const create = (address) => {
+  return new Promise((resolve, reject) => {
+    getUserByAddress(address)
+      .then(() => {
+        return reject(new Error("User already existed."));
+      })
+      .catch((err) => {
+        const nounce = keygen.url(20);
+        const user = new User({
+          addresses: [address],
+          nounce,
+        });
+        return resolve(user.save());
+      });
+  });
+};
+
+const reNounce = (user) => {
+  return new Promise((resolve, reject) => {
+    const nounce = keygen.url(20);
+    User.updateOne(
+      { _id: user._id },
+      {
+        $set: { nounce },
+      },
+      (err) => {
+        if (err) return reject(err);
+        return resolve("Ronounced Successfully.");
+      }
+    );
+  });
+};
+
+export const methods = {
+  queries: {
+    getUserByAddress,
+    get,
+  },
+  commands: {
+    create,
+    reNounce,
+  },
+};
+
+export default {
+  User,
+  methods,
+};

@@ -1,5 +1,10 @@
 import { createModule, gql } from "graphql-modules";
+import jwt from "jsonwebtoken";
+import { getAddressFromPublicKey } from '@zilliqa-js/crypto'
+
 import { __dirname } from "../../util.js";
+import { methods } from "./model.js";
+import isVerifiedSign from "./Authentication/isVerifiedSign.js";
 
 export const UserModule = createModule({
   id: "userModule",
@@ -8,24 +13,17 @@ export const UserModule = createModule({
     gql`
       scalar Upload
 
-
-      type PersonalInfo {
-        firstName: String
-        lastName: String
-        birthDay: String
+      type User {
+        _id: ID!
+        username: String
+        displayName: String
         avatar: String
         bio: String
         setted: Boolean!
-      }
-
-      type User {
-        _id: ID!
-        email: String!
-        username: String!
-        verified: Boolean!
-        personal: PersonalInfo
         createdAt: String!
         updatedAt: String!
+        addresses: [String!]!
+        nounce: String!
       }
 
       type Query {
@@ -34,38 +32,70 @@ export const UserModule = createModule({
         users: [User!]!
       }
 
-      input UserCreationInput {
-        email: String!
-        password: String!
-        username: String!
-      }
-
       input PersonalInfoInput {
-        firstName: String
-        lastName: String
-        birthDay: String
+        displayName: String!
         avatar: Upload
         bio: String
       }
 
       type Mutation {
-        signup(user: UserCreationInput): String!
-        singin(identifier: String!, password: String!): String!
-        requestResetPasswordKey(identifier: String!): String!
-        resetPassword(identifier: String!, key: String!, password: String!): String!
-        changePassword(password: String!): String!
-        editPersonalInfo(personalInfo: PersonalInfoInput!): String!
+        getNounce(address: String!): String!
+        getToken(address: String!, signedMessage: String!, publicKey: String!): String!
 
+        editPersonalInfo(personalInfo: PersonalInfoInput!): String!
         doesUsernameExist(username: String!): Boolean!
-        doesEmailExist(email: String!): Boolean!
+        setUsername(username: String!): String!
       }
     `,
   ],
   resolvers: {
-    Query: {
+    Query: {},
+
+    Mutation: {
+      getNounce: (_, { address }) => {
+        return methods.queries
+          .getUserByAddress(address)
+          .then((user) => user)
+          .catch(() => {
+            return methods.commands.create(address);
+          })
+          .then((user) => {
+            return user.nounce;
+          })
+          .catch((err) => {
+            throw new Error(err);
+          });
+      },
+
+      getToken: (_, { address, signedMessage, publicKey }) => {
+        return methods.queries
+          .getUserByAddress(address)
+          .then((user) => {
+            const matchedAddress = user.addresses.find(address => address === String(getAddressFromPublicKey(publicKey)))
+            if(matchedAddress) {
+              if (
+                isVerifiedSign({
+                  message: user.nounce,
+                  publicKey,
+                  signature: signedMessage,
+                })
+              ) {
+                // Generate JWT
+                return jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+              } else {
+                throw new Error("Sign does not match.");
+              }
+            } else {
+              throw new Error("There is no address that match with public key.")
+            }
+            
+          })
+          .catch((err) => {
+            throw new Error(err);
+          });
+      },
     },
   },
 });
 
-
-export default UserModule
+export default UserModule;
