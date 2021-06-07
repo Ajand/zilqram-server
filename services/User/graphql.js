@@ -2,11 +2,11 @@ import { createModule, gql } from "graphql-modules";
 import jwt from "jsonwebtoken";
 import { getAddressFromPublicKey } from "@zilliqa-js/crypto";
 import keygen from "keygen";
-import path from 'path'
-import fs from 'fs'
+import path from "path";
+import fs from "fs";
 
 import { __dirname } from "../../util.js";
-import { methods } from "./model.js";
+import { methods, User } from "./model.js";
 import isVerifiedSign from "./Authentication/isVerifiedSign.js";
 
 export const UserModule = createModule({
@@ -131,32 +131,36 @@ export const UserModule = createModule({
       ) => {
         const filename = keygen.url(keygen.large);
         const filesDirectory = path.resolve(__dirname, "files");
-      
-        console.log(fs.existsSync(filesDirectory), fs.mkdirSync)
 
         if (!fs.existsSync(filesDirectory)) {
           fs.mkdirSync(filesDirectory);
         }
-
-       // console.log(avatar.promise)
-        
-        avatar.promise.then(({createReadStream}) => {
-         createReadStream()
-          .pipe(fs.createWriteStream(path.resolve(filesDirectory, filename)))
-          .on("start", () => console.log('hi'))
-          .on("finish", (result) => {
-            console.log(result)
-            return "done";
-          }) 
-        })
-        
-       /*  .createReadStream()
-          .pipe(fs.createWriteStream(path.resolve(imagesDirectory, filename)))
-          .on("start", () => console.log('hi'))
-          .on("finish", (result) => {
-            console.log(result)
-            return "done";
-          });*/
+        return new Promise((resolve, reject) => {
+          avatar.promise
+            .then(({ createReadStream }) => {
+              createReadStream()
+                .pipe(
+                  fs.createWriteStream(path.resolve(filesDirectory, filename))
+                )
+                .on("finish", (result) => {
+                  methods.commands
+                    .completeProfile(userId, {
+                      avatar: filename,
+                      displayName,
+                      username,
+                      bio,
+                    })
+                    .then((msg) => resolve(msg))
+                    .catch((err) => {
+                      throw new Error(err);
+                    });
+                });
+            })
+            .catch((err) => {
+              console.log(err);
+              throw new Error(err);
+            });
+        });
       },
     },
   },

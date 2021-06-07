@@ -83,6 +83,27 @@ const reNounce = (user) => {
   });
 };
 
+const completeProfile = (userId, { avatar, username, displayName, bio }) => {
+  return new Promise((resolve, reject) => {
+    User.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          avatar,
+          username,
+          displayName,
+          bio,
+          setted: true,
+        },
+      },
+      (err) => {
+        if(err) return reject(err)
+        return resolve('done')
+      }
+    );
+  });
+};
+
 export const methods = {
   queries: {
     getUserByAddress,
@@ -91,6 +112,7 @@ export const methods = {
   commands: {
     create,
     reNounce,
+    completeProfile,
   },
 };
 

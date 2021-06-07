@@ -3,12 +3,13 @@ dotEnv.config();
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { graphqlUploadExpress } from "graphql-upload";
-
+import path from 'path'
 import jwt from "jsonwebtoken";
 
 import application from "./graphql-application.js";
 import "./dbConnector.js";
 import { methods } from "./services/User/model.js";
+import { __dirname } from "./util.js";
 
 const schema = application.createSchemaForApollo();
 
@@ -39,6 +40,8 @@ app.use(
   graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 })
 );
 server.applyMiddleware({ app });
+
+app.use("/files", express.static(path.resolve(__dirname, "files")));
 
 await new Promise((resolve) => app.listen({ port: 4000 }, resolve));
 console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`);
