@@ -1,6 +1,9 @@
 import { createModule, gql } from "graphql-modules";
 import jwt from "jsonwebtoken";
 import { getAddressFromPublicKey } from "@zilliqa-js/crypto";
+import keygen from "keygen";
+import path from 'path'
+import fs from 'fs'
 
 import { __dirname } from "../../util.js";
 import { methods } from "./model.js";
@@ -46,6 +49,13 @@ export const UserModule = createModule({
           publicKey: String!
         ): String!
 
+        completeProfile(
+          avatar: Upload
+          displayName: String!
+          username: String!
+          bio: String
+        ): String!
+
         editPersonalInfo(personalInfo: PersonalInfoInput!): String!
         doesUsernameExist(username: String!): Boolean!
         setUsername(username: String!): String!
@@ -55,7 +65,7 @@ export const UserModule = createModule({
   resolvers: {
     Query: {
       me: (_, __, { userId }) => {
-        if(!userId) return null
+        if (!userId) return null;
         return methods.queries
           .get(userId)
           .then((user) => user)
@@ -112,6 +122,41 @@ export const UserModule = createModule({
             console.log(err);
             throw new Error(err);
           });
+      },
+
+      completeProfile: (
+        _,
+        { avatar, displayName, username, bio },
+        { userId }
+      ) => {
+        const filename = keygen.url(keygen.large);
+        const filesDirectory = path.resolve(__dirname, "files");
+      
+        console.log(fs.existsSync(filesDirectory), fs.mkdirSync)
+
+        if (!fs.existsSync(filesDirectory)) {
+          fs.mkdirSync(filesDirectory);
+        }
+
+       // console.log(avatar.promise)
+        
+        avatar.promise.then(({createReadStream}) => {
+         createReadStream()
+          .pipe(fs.createWriteStream(path.resolve(filesDirectory, filename)))
+          .on("start", () => console.log('hi'))
+          .on("finish", (result) => {
+            console.log(result)
+            return "done";
+          }) 
+        })
+        
+       /*  .createReadStream()
+          .pipe(fs.createWriteStream(path.resolve(imagesDirectory, filename)))
+          .on("start", () => console.log('hi'))
+          .on("finish", (result) => {
+            console.log(result)
+            return "done";
+          });*/
       },
     },
   },
