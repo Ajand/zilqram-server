@@ -1,27 +1,19 @@
 import UserService from "./services/User/index.js";
 import NotificationService from "./services/Notification/index.js";
-import GameService from "./services/Game/index.js";
-import TeamService from "./services/Team/index.js";
-import TournamentService from "./services/Tournament/index.js";
+import NftService from "./services/Nft/index.js";
 
 const userService = UserService();
 const noitificationService = NotificationService();
-const gameService = GameService();
-const teamService = TeamService({ userService });
-const tournamentService = TournamentService();
+const nftService = NftService();
 
 export {
   userService,
   noitificationService,
-  teamService,
-  tournamentService,
-  gameService,
+  nftService,
 };
 
 export default [
   userService,
   noitificationService,
-  gameService,
-  teamService,
-  tournamentService,
+  nftService,
 ];
