@@ -1,10 +1,9 @@
 import graphqlModule from "./graphql.js";
 
-const TournamentService = () => {
+const NFTService = ({ userService }) => {
   return {
-    graphqlModule,
+    graphqlModule: graphqlModule({ userService }),
   };
 };
 
-export default TournamentService;
- 
+export default NFTService;

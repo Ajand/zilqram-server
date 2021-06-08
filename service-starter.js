@@ -4,7 +4,7 @@ import NftService from "./services/Nft/index.js";
 
 const userService = UserService();
 const noitificationService = NotificationService();
-const nftService = NftService();
+const nftService = NftService({userService});
 
 export {
   userService,
