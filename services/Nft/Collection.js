@@ -23,6 +23,7 @@ const NFTCollectionSchema = new mongoose.Schema(
       type: String,
       requried: true,
     },
+    cover: String
   },
   {
     timestamps: true,
@@ -44,6 +45,25 @@ const create = (userId, { logo, name, description, contractAddress }) => {
   });
 
   return nftCol.save();
+};
+
+const updateNftCollectionCover = (userId, collectionId, { cover }) => {
+  return new Promise((resolve, reject) => {
+    get(collectionId)
+      .then((coll) => {
+        if (!coll) return reject(new Error("No collection found."));
+        if (String(coll.creator) !== userId) return reject(new Error("Unauthorized."));
+        NFTCollection.updateOne(
+          { _id: collectionId },
+          { $set: { cover } },
+          (err) => {
+            if (err) return reject(err);
+            return resolve("done");
+          }
+        );
+      })
+      .catch((err) => reject(err));
+  });
 };
 
 const getUserCollections = (userId) => {
@@ -71,6 +91,7 @@ export const methods = {
   },
   commands: {
     create,
+    updateNftCollectionCover
   },
 };
 

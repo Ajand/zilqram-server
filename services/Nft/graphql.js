@@ -25,6 +25,7 @@ export const NFTModule = ({ userService }) => {
           logo: String!
           creator: User
           description: String
+          cover: String
         }
 
         extend type Query {
@@ -40,6 +41,8 @@ export const NFTModule = ({ userService }) => {
             description: String
             contractAddress: String!
           ): Collection!
+
+          updateNftCollectionCover(collectionId: ID!, cover: Upload!): String!
         }
       `,
     ],
@@ -91,6 +94,39 @@ export const NFTModule = ({ userService }) => {
                         contractAddress,
                       })
                       .then((coll) => resolve(CollectionMapper(coll)))
+                      .catch((err) => {
+                        console.log(err);
+                        return reject(err);
+                      });
+                  });
+              })
+              .catch((err) => {
+                throw new Error(err);
+              });
+          });
+        },
+
+        updateNftCollectionCover: (_, { cover, collectionId }, { userId }) => {
+          console.log(userId, collectionId)
+          const filename = keygen.url(keygen.large);
+          const filesDirectory = path.resolve(__dirname, "files");
+
+          if (!fs.existsSync(filesDirectory)) {
+            fs.mkdirSync(filesDirectory);
+          }
+          return new Promise((resolve, reject) => {
+            cover.promise
+              .then(({ createReadStream }) => {
+                createReadStream()
+                  .pipe(
+                    fs.createWriteStream(path.resolve(filesDirectory, filename))
+                  )
+                  .on("finish", (result) => {
+                    return collectionMethods.commands
+                      .updateNftCollectionCover(userId, collectionId, {
+                        cover: filename,
+                      })
+                      .then((msg) => msg)
                       .catch((err) => {
                         console.log(err);
                         return reject(err);
