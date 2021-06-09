@@ -43,6 +43,11 @@ export const NFTModule = ({ userService }) => {
           ): Collection!
 
           updateNftCollectionCover(collectionId: ID!, cover: Upload!): String!
+          editNftCollection(
+            collectionId: ID!
+            logo: Upload!
+            description: String
+          ): String!
         }
       `,
     ],
@@ -107,7 +112,6 @@ export const NFTModule = ({ userService }) => {
         },
 
         updateNftCollectionCover: (_, { cover, collectionId }, { userId }) => {
-          console.log(userId, collectionId)
           const filename = keygen.url(keygen.large);
           const filesDirectory = path.resolve(__dirname, "files");
 
@@ -126,9 +130,46 @@ export const NFTModule = ({ userService }) => {
                       .updateNftCollectionCover(userId, collectionId, {
                         cover: filename,
                       })
-                      .then((msg) => msg)
+                      .then((msg) => resolve(msg))
                       .catch((err) => {
-                        console.log(err);
+                        return reject(err);
+                      });
+                  });
+              })
+              .catch((err) => {
+                throw new Error(err);
+              });
+          });
+        },
+
+        editNftCollection: (
+          _,
+          { logo, description, collectionId },
+          { userId }
+        ) => {
+          const filename = keygen.url(keygen.large);
+          const filesDirectory = path.resolve(__dirname, "files");
+
+          if (!fs.existsSync(filesDirectory)) {
+            fs.mkdirSync(filesDirectory);
+          }
+          return new Promise((resolve, reject) => {
+            logo.promise
+              .then(({ createReadStream }) => {
+                createReadStream()
+                  .pipe(
+                    fs.createWriteStream(path.resolve(filesDirectory, filename))
+                  )
+                  .on("finish", (result) => {
+                    return collectionMethods.commands
+                      .editCollection(userId, collectionId, {
+                        logo: filename,
+                        description,
+                      })
+                      .then((msg) => {
+                        return resolve(msg);
+                      })
+                      .catch((err) => {
                         return reject(err);
                       });
                   });

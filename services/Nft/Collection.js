@@ -66,6 +66,27 @@ const updateNftCollectionCover = (userId, collectionId, { cover }) => {
   });
 };
 
+
+const editCollection = (userId, collectionId, { logo, description  }) => {
+  return new Promise((resolve, reject) => {
+    get(collectionId)
+      .then((coll) => {
+        if (!coll) return reject(new Error("No collection found."));
+        if (String(coll.creator) !== userId) return reject(new Error("Unauthorized."));
+        NFTCollection.updateOne(
+          { _id: collectionId },
+          { $set: { logo, description } },
+          (err) => {
+            if (err) return reject(err);
+            return resolve("done");
+          }
+        );
+      })
+      .catch((err) => reject(err));
+  });
+};
+
+
 const getUserCollections = (userId) => {
   return new Promise((resolve, reject) => {
     NFTCollection.find({ creator: userId }, (err, colls) => {
@@ -91,7 +112,8 @@ export const methods = {
   },
   commands: {
     create,
-    updateNftCollectionCover
+    updateNftCollectionCover,
+    editCollection
   },
 };
 
