@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs";
 
 import { methods as collectionMethods, methods } from "./Collection.js";
+import NFTMetaMethods from "./NFTMeta.js";
 
 export const NFTModule = ({ userService }) => {
   const CollectionMapper = (collection) => {
@@ -26,6 +27,21 @@ export const NFTModule = ({ userService }) => {
           creator: User
           description: String
           cover: String
+          contractAddress: String!
+        }
+
+        type MetaProperty {
+          trait_type: String!
+          value: String!
+        }
+
+        type NFTMeta {
+          _id: ID!
+          name: String!
+          description: String
+          external_url: String
+          properties: [MetaProperty!]!
+          image: String!
         }
 
         extend type Query {
@@ -47,6 +63,15 @@ export const NFTModule = ({ userService }) => {
             collectionId: ID!
             logo: Upload!
             description: String
+          ): String!
+
+          createMetaProperty(
+            _id: ID!
+            name: String!
+            description: String
+            external_url: String
+            properties: String
+            image: Upload!
           ): String!
         }
       `,
@@ -168,6 +193,48 @@ export const NFTModule = ({ userService }) => {
                       })
                       .then((msg) => {
                         return resolve(msg);
+                      })
+                      .catch((err) => {
+                        return reject(err);
+                      });
+                  });
+              })
+              .catch((err) => {
+                throw new Error(err);
+              });
+          });
+        },
+
+        createMetaProperty: (
+          _,
+          { _id, name, image, external_url, properties, description },
+          { userId }
+        ) => {
+          const filename = keygen.url(keygen.large);
+          const filesDirectory = path.resolve(__dirname, "files");
+
+          if (!fs.existsSync(filesDirectory)) {
+            fs.mkdirSync(filesDirectory);
+          }
+          return new Promise((resolve, reject) => {
+            image.promise
+              .then(({ createReadStream }) => {
+                createReadStream()
+                  .pipe(
+                    fs.createWriteStream(path.resolve(filesDirectory, filename))
+                  )
+                  .on("finish", (result) => {
+                    return NFTMetaMethods.commands
+                      .create({
+                        _id,
+                        name,
+                        image: filename,
+                        external_url,
+                        properties: JSON.parse(properties),
+                        description,
+                      })
+                      .then((msg) => {
+                        return resolve('added');
                       })
                       .catch((err) => {
                         return reject(err);

@@ -3,12 +3,12 @@ dotEnv.config();
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { graphqlUploadExpress } from "graphql-upload";
-import path from 'path'
+import path from "path";
 import jwt from "jsonwebtoken";
 
 import application from "./graphql-application.js";
 import "./dbConnector.js";
-import { methods } from "./services/User/model.js";
+import NFTMethods from "./services/Nft/NFTMeta.js";
 import { __dirname } from "./util.js";
 
 const schema = application.createSchemaForApollo();
@@ -40,6 +40,13 @@ app.use(
   graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 })
 );
 server.applyMiddleware({ app });
+
+app.get("/nft-address/:nft_id", (req, res, next) => {
+  return NFTMethods.queries
+    .get(req.params.nft_id)
+    .then((meta) => res.json(meta))
+    .catch((err) => next(err));
+});
 
 app.use("/files", express.static(path.resolve(__dirname, "files")));
 
