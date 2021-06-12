@@ -6,9 +6,11 @@
   "type": "module",
   "dependencies": {
     "@zilliqa-js/crypto": "^3.0.0",
+    "@zilliqa-js/zilliqa": "^3.0.0",
     "apollo-server": "^2.24.0",
     "apollo-server-express": "^2.25.0",
     "bcrypt": "^5.0.1",
+    "cors": "^2.8.5",
     "dotenv": "^9.0.2",
     "express": "^4.17.1",
     "graphql": "^15.5.0",

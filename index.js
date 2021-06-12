@@ -5,6 +5,7 @@ import { ApolloServer } from "apollo-server-express";
 import { graphqlUploadExpress } from "graphql-upload";
 import path from "path";
 import jwt from "jsonwebtoken";
+import cors from 'cors'
 
 import application from "./graphql-application.js";
 import "./dbConnector.js";
@@ -35,16 +36,19 @@ const server = new ApolloServer({
 await server.start();
 
 const app = express();
+app.use(cors())
+
 app.use(
   "/graphql",
   graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 })
 );
 server.applyMiddleware({ app });
 
+const SERVER_ADDRESS = 'http://localhost:4000'
 app.get("/nft-address/:nft_id", (req, res, next) => {
   return NFTMethods.queries
     .get(req.params.nft_id)
-    .then((meta) => res.json(meta))
+    .then((meta) => res.json({...meta._doc, image: `${SERVER_ADDRESS}/files/${meta.image}`}))
     .catch((err) => next(err));
 });
 

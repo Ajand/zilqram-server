@@ -1,32 +1,25 @@
 import mongoose from "mongoose";
 
-const NFTMetaSchema = new mongoose.Schema(
+const ContentSchema = new mongoose.Schema(
   {
-    name: {
+    variant: {
       type: String,
+      enum: ["zweet", "photo"],
+      default: "zweet",
+    },
+    body: {
+      type: String,
+      require: true,
+    },
+    owner: {
+      type: mongoose.Types.ObjectId,
       required: true,
     },
-    description: {
-      type: String,
+    exclusive: {
+      type: Boolean,
+      default: false,
     },
-    external_url: {
-      type: String,
-    },
-    image: {
-      type: String,
-      required: true,
-    },
-    properties: [
-      {
-        trait_type: String,
-        value: String,
-      },
-    ],
     likes: {
-      type: Number,
-      default: 0,
-    },
-    views: {
       type: Number,
       default: 0,
     },
@@ -40,41 +33,29 @@ const NFTMetaSchema = new mongoose.Schema(
   }
 );
 
-const NFTMeta = mongoose.model("nftMeta", NFTMetaSchema);
+const Content = mongoose.model("content", ContentSchema);
 
-const create = ({
-  _id,
-  name,
-  image,
-  external_url,
-  properties,
-  description,
-}) => {
-  const nftMeta = new NFTMeta({
-    _id,
-    name,
-    image,
-    external_url,
-    properties,
-    description,
-  });
+const create = (owner, { variant, body, exclusive }) => {
+  const content = new Content({ owner, variant, body, exclusive });
 
-  return nftMeta.save();
+  return content.save();
 };
 
 const like = (_id, liker) => {
   return new Promise((resolve, reject) => {
-    getInternal(_id)
+    get(_id)
       .then((nmeta) => {
+        console.log(nmeta.likers, liker)
         if (nmeta.likers.includes(liker)) {
-          NFTMeta.updateOne(
+          const newLikers = nmeta.likers.filter(
+            (lik) => String(lik) != String(liker)
+          )
+          Content.updateOne(
             { _id },
             {
               $set: {
-                likers: nmeta.likers.filter(
-                  (lik) => String(lik) != String(liker)
-                ),
-                likes: nmeta.likes - 1,
+                likers: newLikers,
+                likes: newLikers.length,
               },
             },
             (err) => {
@@ -83,7 +64,7 @@ const like = (_id, liker) => {
             }
           );
         } else {
-          NFTMeta.updateOne(
+          Content.updateOne(
             { _id },
             {
               $set: {
@@ -102,37 +83,38 @@ const like = (_id, liker) => {
   });
 };
 
-const increaseView = (_id) => {
+const remove = (_id) => {
   return new Promise((resolve, reject) => {
-    NFTMeta.updateOne(
-      { _id },
-      {
-        $inc: { views: 1 },
-      },
-      (err) => {
-        if (err) reject(err);
-        return resolve("done");
-      }
-    );
+    Content.findOne({ _id }, (err, content) => {
+      if (err) return reject(err);
+      return resolve(content);
+    });
   });
 };
 
 const get = (_id) => {
   return new Promise((resolve, reject) => {
-    NFTMeta.findOne({ _id }, (err, nmta) => {
+    Content.findOne({ _id }, (err, content) => {
       if (err) return reject(err);
-      increaseView(_id)
-        .then(() => resolve(nmta))
-        .catch((err) => resolve(nmta));
+      return resolve(content);
     });
   });
 };
 
-const getInternal = (_id) => {
+const getOfOwner = (owner) => {
   return new Promise((resolve, reject) => {
-    NFTMeta.findOne({ _id }, (err, nmta) => {
+    Content.find({ owner }, (err, contents) => {
       if (err) return reject(err);
-      return resolve(nmta);
+      return resolve(contents);
+    });
+  });
+};
+
+const getAll = () => {
+  return new Promise((resolve, reject) => {
+    Content.find({}, (err, contents) => {
+      if (err) return reject(err);
+      return resolve(contents);
     });
   });
 };
@@ -140,10 +122,13 @@ const getInternal = (_id) => {
 const methods = {
   queries: {
     get,
+    getOfOwner,
+    getAll
   },
   commands: {
+    remove,
     create,
-    like
+    like,
   },
 };
 

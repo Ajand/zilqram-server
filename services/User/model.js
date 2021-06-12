@@ -22,6 +22,8 @@ const UserSchema = new mongoose.Schema(
       required: true,
     },
     addresses: [String],
+    followers: [mongoose.Types.ObjectId],
+    followings: [mongoose.Types.ObjectId],
   },
   {
     timestamps: true,
@@ -97,10 +99,85 @@ const completeProfile = (userId, { avatar, username, displayName, bio }) => {
         },
       },
       (err) => {
-        if(err) return reject(err)
-        return resolve('done')
+        if (err) return reject(err);
+        return resolve("done");
       }
     );
+  });
+};
+
+const addNewAddress = (userId, newAddress) => {
+  return new Promise((resolve, reject) => {
+    User.updateOne(
+      {
+        _id: userId,
+      },
+      {
+        $push: { addresses: newAddress },
+      },
+      (err) => {
+        if (err) return reject(err);
+        return resolve("added");
+      }
+    );
+  });
+};
+
+const follow = (follower, following) => {
+  return new Promise((resolve, reject) => {
+    get(_id)
+      .then((user) => {
+        if (user.followings.includes(liker)) {
+          User.updateOne(
+            { _id: follower },
+            {
+              $pull: {
+                followings: following
+              },
+            },
+            (err) => {
+              if (err) return reject(err);
+              return User.updateOne(
+                { _id: following },
+                {
+                  $pull: {
+                    followers: follower
+                  },
+                },
+                (err) => {
+                  if (err) return reject(err);
+                  return resolve("done");
+                }
+              );
+            }
+          );
+        } else {
+          User.updateOne(
+            { _id: follower },
+            {
+              $push: {
+                followings: following
+              },
+            },
+            (err) => {
+              if (err) return reject(err);
+              return User.updateOne(
+                { _id: following },
+                {
+                  $push: {
+                    followers: follower
+                  },
+                },
+                (err) => {
+                  if (err) return reject(err);
+                  return resolve("done");
+                }
+              );
+            }
+          );
+        }
+      })
+      .catch((err) => reject(err));
   });
 };
 
@@ -113,6 +190,8 @@ export const methods = {
     create,
     reNounce,
     completeProfile,
+    addNewAddress,
+    follow
   },
 };
 
