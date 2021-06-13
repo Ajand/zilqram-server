@@ -149,6 +149,16 @@ export const FeedModule = ({ userService }) => {
             });
         },
 
+        contents: (_, __) => {
+          return Content.queries
+            .getAll()
+            .then((contents) => contents.map(ContentMapper))
+            .catch((err) => {
+              throw new Error(err);
+            });
+        },
+
+
         comments: (_, {belongsTo}) => {
           return Comment.queries
             .commentsOf(belongsTo)

@@ -26,7 +26,8 @@ export const UserModule = createModule({
         createdAt: String!
         updatedAt: String!
         addresses: [String!]!
-        nounce: String!
+        followers: [String]
+        followings: [String]
       }
 
       type Query {
@@ -59,6 +60,8 @@ export const UserModule = createModule({
         editPersonalInfo(personalInfo: PersonalInfoInput!): String!
         doesUsernameExist(username: String!): Boolean!
         setUsername(username: String!): String!
+
+        followUser(following: ID!): String!
       }
     `,
   ],
@@ -161,6 +164,18 @@ export const UserModule = createModule({
               throw new Error(err);
             });
         });
+      },
+
+      followUser: (_, { following }, { userId }) => {
+        return methods.commands
+          .follow(userId, following)
+          .then((msg) => {
+            return "user followed";
+          })
+          .catch((err) => {
+            console.log(err)
+            throw new Error(err);
+          });
       },
     },
   },

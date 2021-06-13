@@ -105,10 +105,20 @@ const get = (_id) => {
   });
 };
 
+const getAll = () => {
+  return new Promise((resolve, reject) => {
+    NFTCollection.find({ }, (err, coll) => {
+      if (err) return reject(err);
+      return resolve(coll);
+    });
+  });
+}
+
 export const methods = {
   queries: {
     getUserCollections,
     get,
+    getAll
   },
   commands: {
     create,

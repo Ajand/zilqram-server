@@ -27,7 +27,7 @@ export const NFTModule = ({ userService }) => {
           creator: User
           description: String
           cover: String
-          contractAddress: String!
+          contractAddress: String
         }
 
         type MetaProperty {
@@ -47,6 +47,8 @@ export const NFTModule = ({ userService }) => {
         extend type Query {
           myNftCollections: [Collection!]!
           nftCollection(_id: ID!): Collection
+          nftCollections: [Collection]
+          userNftCollections(userId: ID!): [Collection]
           collections: [Collection!]!
         }
 
@@ -73,12 +75,24 @@ export const NFTModule = ({ userService }) => {
             properties: String
             image: Upload!
           ): String!
+
+          likeNFT(_id: ID!): String!
+
         }
       `,
     ],
     resolvers: {
       Query: {
         myNftCollections: (_, __, { userId }) => {
+          return collectionMethods.queries
+            .getUserCollections(userId)
+            .then((colls) => colls.map(CollectionMapper))
+            .catch((err) => {
+              throw new Error(err);
+            });
+        },
+
+        userNftCollections: (_, {userId}) => {
           return collectionMethods.queries
             .getUserCollections(userId)
             .then((colls) => colls.map(CollectionMapper))
@@ -95,6 +109,15 @@ export const NFTModule = ({ userService }) => {
               throw new Error(err);
             });
         },
+
+        nftCollections: (_) => {
+          return collectionMethods.queries
+            .getAll()
+            .then((colls) => colls.map(CollectionMapper))
+            .catch((err) => {
+              throw new Error(err);
+            });
+        }
       },
       Mutation: {
         createNftCollection: (
@@ -245,6 +268,18 @@ export const NFTModule = ({ userService }) => {
                 throw new Error(err);
               });
           });
+        },
+
+      
+        likeNFT: (_, { _id }, { userId }) => {
+          if (!userId) throw new Error("Login First!");
+          return NFTMetaMethods.commands
+            .like(_id, userId)
+            .then((msg) => msg)
+            .catch((err) => {
+              console.log(err)
+              throw new Error(err);
+            });
         },
       },
     },

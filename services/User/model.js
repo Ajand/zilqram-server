@@ -125,9 +125,9 @@ const addNewAddress = (userId, newAddress) => {
 
 const follow = (follower, following) => {
   return new Promise((resolve, reject) => {
-    get(_id)
+    get(follower)
       .then((user) => {
-        if (user.followings.includes(liker)) {
+        if (user.followings.includes(following)) {
           User.updateOne(
             { _id: follower },
             {
