@@ -44,7 +44,8 @@ app.use(
 );
 server.applyMiddleware({ app });
 
-const SERVER_ADDRESS = 'http://localhost:4000'
+const SERVER_ADDRESS = process.env.SERVER_ADDRESS
+
 app.get("/nft-address/:nft_id", (req, res, next) => {
   return NFTMethods.queries
     .get(req.params.nft_id)
