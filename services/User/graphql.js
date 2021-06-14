@@ -76,6 +76,15 @@ export const UserModule = createModule({
             throw new Error(err);
           });
       },
+
+      user: (_, {_id}) => {
+        return methods.queries
+          .get(_id)
+          .then((user) => user)
+          .catch((err) => {
+            throw new Error(err);
+          });
+      },
     },
 
     Mutation: {
